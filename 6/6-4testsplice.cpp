@@ -9,6 +9,8 @@
 #include <string.h>
 #include <fcntl.h>
 
+/*使用splice函数来实现一个零拷贝的回射服务器，它将客户端发送的数据原样返回给客户端*/
+
 int main( int argc, char* argv[] )
 {
     if( argc <= 2 )
@@ -29,9 +31,10 @@ int main( int argc, char* argv[] )
     assert( sock >= 0 );
 
     int ret = bind( sock, ( struct sockaddr* )&address, sizeof( address ) );
+    /*bind函数将address所指的socket地址分配给未命名的sockfd文件描述符*/
     assert( ret != -1 );
 
-    ret = listen( sock, 5 );
+    ret = listen( sock, 5 );//通过listen系统调用创建一个监听队列，sock为被监听的socket
     assert( ret != -1 );
 
     struct sockaddr_in client;
@@ -45,8 +48,9 @@ int main( int argc, char* argv[] )
     {
         int pipefd[2];
         assert( ret != -1 );
-        ret = pipe( pipefd );
+        ret = pipe( pipefd );//创建管道
         ret = splice( connfd, NULL, pipefd[1], NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE ); 
+        //connfd：带输入数据的文件描述符； NULL：从当前偏移位置读入；
         assert( ret != -1 );
         ret = splice( pipefd[0], NULL, connfd, NULL, 32768, SPLICE_F_MORE | SPLICE_F_MOVE );
         assert( ret != -1 );
