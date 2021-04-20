@@ -51,7 +51,7 @@ int main( int argc, char* argv[] )
     inet_pton( AF_INET, ip, &address.sin_addr );
     address.sin_port = htons( port );
 
-    int listenfd = socket( PF_INET, SOCK_STREAM, 0 );
+    int listenfd = socket( PF_INET, SOCK_STREAM, 0 );//第一个监听socket
     assert( listenfd >= 0 );
 
     ret = bind( listenfd, ( struct sockaddr* )&address, sizeof( address ) );
@@ -64,14 +64,15 @@ int main( int argc, char* argv[] )
     address.sin_family = AF_INET;
     inet_pton( AF_INET, ip, &address.sin_addr );
     address.sin_port = htons( port );
-    int udpfd = socket( PF_INET, SOCK_DGRAM, 0 );
+    int udpfd = socket( PF_INET, SOCK_DGRAM, 0 );//第二个监听socket
     assert( udpfd >= 0 );
 
     ret = bind( udpfd, ( struct sockaddr* )&address, sizeof( address ) );
     assert( ret != -1 );
 
     epoll_event events[ MAX_EVENT_NUMBER ];
-    int epollfd = epoll_create( 5 );
+    //epoll把用户关心的文件描述符上的事件放在内核里的一个事件表中
+    int epollfd = epoll_create( 5 );//创建文件描述符，表示内核中的事件表
     assert( epollfd != -1 );
     addfd( epollfd, listenfd );
     addfd( epollfd, udpfd );
