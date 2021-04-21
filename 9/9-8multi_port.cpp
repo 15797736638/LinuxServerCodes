@@ -72,7 +72,7 @@ int main( int argc, char* argv[] )
 
     epoll_event events[ MAX_EVENT_NUMBER ];
     //epoll把用户关心的文件描述符上的事件放在内核里的一个事件表中
-    int epollfd = epoll_create( 5 );//创建文件描述符，表示内核中的事件表
+    int epollfd = epoll_create( 5 );//创建文件描述符，标识内核中的事件表
     assert( epollfd != -1 );
     addfd( epollfd, listenfd );
     addfd( epollfd, udpfd );
@@ -80,6 +80,11 @@ int main( int argc, char* argv[] )
     while( 1 )
     {
         int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, -1 );
+        //epoll_wait成功时返回就绪文件描述符的个数
+        //epoll_wait如果检测到事件，就将所有就绪的事件从内核事件表（由epollfd参数指定）中复制到第二个参数events指向
+        //的数组中
+        //这个数组只用于输出epoll_wait检测到的就绪事件，而不像select和poll的数组参数那样既用于传入用户注册的事件，
+        //又用于输出内核检测到的就绪事件，极大地提高了应用程序索引就绪文件描述符的效率。
         if ( number < 0 )
         {
             printf( "epoll failure\n" );
