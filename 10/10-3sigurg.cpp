@@ -14,18 +14,18 @@
 
 static int connfd;
 
-void sig_urg( int sig )
+void sig_urg( int sig )//SIGURG信号的处理函数
 {
     int save_errno = errno;
     
     char buffer[ BUF_SIZE ];
     memset( buffer, '\0', BUF_SIZE );
-    int ret = recv( connfd, buffer, BUF_SIZE-1, MSG_OOB );
+    int ret = recv( connfd, buffer, BUF_SIZE-1, MSG_OOB ); //接受带外数据
     printf( "got %d bytes of oob data '%s'\n", ret, buffer );
 
     errno = save_errno;
 }
-
+///        addsig( SIGURG, sig_urg );
 void addsig( int sig, void ( *sig_handler )( int ) )
 {
     struct sigaction sa;
@@ -33,7 +33,7 @@ void addsig( int sig, void ( *sig_handler )( int ) )
     sa.sa_handler = sig_handler;
     sa.sa_flags |= SA_RESTART;
     sigfillset( &sa.sa_mask );
-    assert( sigaction( sig, &sa, NULL ) != -1 );
+    assert( sigaction( sig, &sa, NULL ) != -1 );//sig：要捕获的信号类型
 }
 
 int main( int argc, char* argv[] )
