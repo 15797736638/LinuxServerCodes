@@ -32,23 +32,25 @@ void addfd( int epollfd, int fd )
     epoll_ctl( epollfd, EPOLL_CTL_ADD, fd, &event );
     setnonblocking( fd );
 }
-
+//信号处理函数：
 void sig_handler( int sig )
 {
-    int save_errno = errno;
+    int save_errno = errno;//保留原来的errno，在函数最后恢复，以保证函数的可重入性
     int msg = sig;
-    send( pipefd[1], ( char* )&msg, 1, 0 );
+    send( pipefd[1], ( char* )&msg, 1, 0 );//将信号值写入管道，以通知主循环
     errno = save_errno;
 }
 
-void addsig( int sig )
+void addsig( int sig )//设置信号的函数
 {
     struct sigaction sa;
     memset( &sa, '\0', sizeof( sa ) );
-    sa.sa_handler = sig_handler;
-    sa.sa_flags |= SA_RESTART;
-    sigfillset( &sa.sa_mask );
-    assert( sigaction( sig, &sa, NULL ) != -1 );
+    sa.sa_handler = sig_handler;//sa结构体中的sa_handler指定信号处理函数
+    sa.sa_flags |= SA_RESTART;//sa_flags成员用于设置程序收到信号时的行为，SA_RESTART表示重新调用被该信号终止的系统调用
+    sigfillset( &sa.sa_mask );//sa_mask成员设置进程的信号掩码
+    //sigfillset表示在信号集中设置所有信号
+    assert( sigaction( sig, &sa, NULL ) != -1 );//sig参数指出要捕获的信号类型，sa表示新的信号处理方式
+    //第三个参数如果不为NULL则输出信号先前的处理方式
 }
 
 int main( int argc, char* argv[] )
@@ -90,11 +92,13 @@ int main( int argc, char* argv[] )
     addfd( epollfd, listenfd );
 
     ret = socketpair( PF_UNIX, SOCK_STREAM, 0, pipefd );
+    //socketpair用于创建双向管道，仅能在本地使用双向管道
     assert( ret != -1 );
     setnonblocking( pipefd[1] );
-    addfd( epollfd, pipefd[0] );
+    addfd( epollfd, pipefd[0] );//将管道可读事件写入epollfd指定的内核事件表中
 
     // add all the interesting signals here
+    //设置一些信号的处理函数
     addsig( SIGHUP );
     addsig( SIGCHLD );
     addsig( SIGTERM );
@@ -103,7 +107,7 @@ int main( int argc, char* argv[] )
 
     while( !stop_server )
     {
-        int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, -1 );
+        int number = epoll_wait( epollfd, events, MAX_EVENT_NUMBER, -1 );//开始监听内核时间表中的事件
         if ( ( number < 0 ) && ( errno != EINTR ) )
         {
             printf( "epoll failure\n" );
@@ -136,7 +140,7 @@ int main( int argc, char* argv[] )
                 else
                 {
                     for( int i = 0; i < ret; ++i )
-                    {
+                    {//每个信号值占一字节，所以按字节来逐个接收信号。
                         //printf( "I caugh the signal %d\n", signals[i] );
                         switch( signals[i] )
                         {
