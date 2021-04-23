@@ -9,7 +9,7 @@
 #include <fcntl.h>
 #include <unistd.h>
 #include <string.h>
-
+//超时连接函数
 int timeout_connect( const char* ip, int port, int time )
 {
     int ret = 0;
@@ -21,12 +21,14 @@ int timeout_connect( const char* ip, int port, int time )
 
     int sockfd = socket( PF_INET, SOCK_STREAM, 0 );
     assert( sockfd >= 0 );
-
+    //通过SO_RCVTIMEO和SO_SNDTIMEO所设置的超时时间的类型是timeval，这和select系统调用的超时参数类型相同
     struct timeval timeout;
     timeout.tv_sec = time;
     timeout.tv_usec = 0;
     socklen_t len = sizeof( timeout );
-    ret = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, len );
+    ret = setsockopt( sockfd, SOL_SOCKET, SO_SNDTIMEO, &timeout, len );//setsocket：设置socket文件描述符属性；fcntl：控制文件描述符属性通用方法
+    //设置sockfd的超时时间
+    
     assert( ret != -1 );
 
     ret = connect( sockfd, ( struct sockaddr* )&address, sizeof( address ) );
