@@ -22,7 +22,7 @@ public:
    time_t expire; //任务的超时时间
    void (*cb_func)( client_data* );//任务回调函数
     //回调函数处理的客户数据，由定时器的执行者传递给回调函数。
-   client_data* user_data;
+   client_data* ;
    util_timer* prev;
    util_timer* next;
 };
@@ -134,6 +134,7 @@ public:
         util_timer* tmp = head;
         while( tmp )
         {
+            //判断定时任务到期的依据是定时器的expire值小于当前的系统时间
             if( cur < tmp->expire )
             {
                 break;
