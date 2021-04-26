@@ -29,7 +29,7 @@ void send_fd( int fd, int fd_to_send )
     msg.msg_control = &cm;
     msg.msg_controllen = CONTROL_LEN;
 
-    sendmsg( fd, &msg, 0 );
+    sendmsg( fd, &msg, 0 );//往socket fd上写msg中的数据
 }
 
 int recv_fd( int fd )
@@ -60,16 +60,17 @@ int main()
     int pipefd[2];
     int fd_to_pass = 0;
 
-    int ret = socketpair( PF_UNIX, SOCK_DGRAM, 0, pipefd );
+    int ret = socketpair( PF_UNIX, SOCK_DGRAM, 0, pipefd );//创建一个双向管道
     assert( ret != -1 );
 
     pid_t pid = fork();
     assert( pid >= 0 );
 
-    if ( pid == 0 )
+    if ( pid == 0 )//pid==0，当前为子进程
     {
-        close( pipefd[0] );
+        close( pipefd[0] );//关闭读端
         fd_to_pass = open( "test.txt", O_RDWR, 0666 );
+        //子进程通过管道将文件描述符发送到父进程。如果文件test.txt打开失败，则子进程将标准输入文件描述符发送到父进程
         send_fd( pipefd[1], ( fd_to_pass > 0 ) ? fd_to_pass : 0 );
         close( fd_to_pass );
         exit( 0 );
